@@ -13,5 +13,9 @@
   "dependencies": {
     "express": "^5.2.1",
     "testcafe": "^3.7.4"
+  },
+  "devDependencies": {
+    "eslint": "^10.2.0",
+    "prettier": "^3.8.1"
   }
 }
