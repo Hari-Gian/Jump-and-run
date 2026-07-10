@@ -1,13 +1,123 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#071d16" />
+  <title>Jamaica Dash</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <canvas id="game" width="1000" height="500"></canvas>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="script.js"></script>
+  <main class="app-shell">
+    <section id="start-screen" class="screen screen--active" aria-labelledby="game-title">
+      <div class="start-layout">
+        <div class="start-copy">
+          <div class="start-meta">
+            <p class="eyebrow">The island plays tricks now</p>
+            <span class="wallet"><span aria-hidden="true">&#9679;</span> <strong data-wallet>0</strong></span>
+          </div>
+          <h1 id="game-title">Jamaica<br /><span>Dash</span></h1>
+          <p class="intro">Ten long trap-filled runs. Floors fall, spikes appear, and safe routes lie. Learn the trick and reach the gate.</p>
+          <div class="start-actions">
+            <button id="play-button" class="button button--primary" type="button">
+              Choose level <span aria-hidden="true">&rarr;</span>
+            </button>
+            <button id="quick-start-button" class="button button--ghost" type="button">Start level 1</button>
+            <button class="button button--shop" data-screen="shop-screen" type="button">Skin shop</button>
+          </div>
+          <div class="controls-hint" aria-label="Game controls">
+            <span><kbd>&larr;</kbd><kbd>&rarr;</kbd> Move</span>
+            <span><kbd>&uarr;</kbd> Jump</span>
+            <span><kbd>R</kbd> Restart</span>
+          </div>
+        </div>
+
+        <div class="island-card" aria-hidden="true">
+          <div class="sun"></div>
+          <div class="flag-card">
+            <img src="./bilderundso/jamacia.png" alt="" />
+            <span>Trust nothing</span>
+          </div>
+          <div class="island island--back"></div>
+          <div class="island island--front"></div>
+          <div class="runner">&#9733;</div>
+          <div class="card-spikes"><i></i><i></i><i></i></div>
+          <p>10 <small>LEVELS</small></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="level-screen" class="screen" aria-labelledby="level-title" hidden>
+      <div class="screen-heading">
+        <button class="icon-button" data-screen="start-screen" type="button" aria-label="Back to start">&larr;</button>
+        <div>
+          <p class="eyebrow">Longer, meaner, trickier</p>
+          <h2 id="level-title">Select a level</h2>
+        </div>
+        <div class="heading-actions">
+          <span class="wallet"><span aria-hidden="true">&#9679;</span> <strong data-wallet>0</strong></span>
+          <button class="button button--small" data-screen="shop-screen" type="button">Shop</button>
+          <div class="progress-pill"><strong id="completed-count">0</strong>/10 cleared</div>
+        </div>
+      </div>
+
+      <div id="level-grid" class="level-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="shop-screen" class="screen" aria-labelledby="shop-title" hidden>
+      <div class="screen-heading">
+        <button class="icon-button" data-screen="start-screen" type="button" aria-label="Back to start">&larr;</button>
+        <div>
+          <p class="eyebrow">Spend coins from levels</p>
+          <h2 id="shop-title">Skin shop</h2>
+        </div>
+        <span class="wallet wallet--large"><span aria-hidden="true">&#9679;</span> <strong data-wallet>0</strong> coins</span>
+      </div>
+      <p class="shop-intro">Collect island coins and clear levels to unlock a new look. Skins change your style, not your hitbox.</p>
+      <div id="shop-grid" class="shop-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="game-screen" class="screen" aria-labelledby="current-level-name" hidden>
+      <div class="game-header">
+        <button id="back-to-levels" class="icon-button" type="button" aria-label="Back to levels">&larr;</button>
+        <div class="game-level-title">
+          <span id="current-level-number">Level 01</span>
+          <h2 id="current-level-name">Treasure Beach</h2>
+        </div>
+        <div class="game-stats">
+          <span>Time <strong id="time-display">00:00</strong></span>
+          <span>Deaths <strong id="fall-display">0</strong></span>
+          <span>Coins <strong id="run-coin-display">0</strong></span>
+        </div>
+        <button id="restart-button" class="button button--small" type="button">Restart</button>
+      </div>
+
+      <div class="game-stage">
+        <canvas id="game" width="1100" height="620" tabindex="0" aria-label="Jamaica Dash game area"></canvas>
+        <div class="level-progress" aria-hidden="true"><span id="level-progress-bar"></span></div>
+        <div id="trap-toast" class="trap-toast" aria-live="polite" hidden>Nice try.</div>
+        <div id="level-complete" class="complete-card" hidden>
+          <span class="complete-icon" aria-hidden="true">&#9733;</span>
+          <p class="eyebrow">Level cleared</p>
+          <h2>You survived!</h2>
+          <p id="complete-summary">You reached the island gate.</p>
+          <p id="reward-summary" class="reward-summary">+30 coins</p>
+          <div class="complete-actions">
+            <button id="next-level-button" class="button button--primary" type="button">Next level &rarr;</button>
+            <button id="levels-button" class="button button--ghost" type="button">Level select</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="touch-controls" aria-label="Touch controls">
+        <button data-control="left" type="button" aria-label="Move left">&larr;</button>
+        <button data-control="right" type="button" aria-label="Move right">&rarr;</button>
+        <button class="jump-button" data-control="jump" type="button">Jump &uarr;</button>
+      </div>
+      <p class="game-tip">Reach the island gate &bull; Never trust a quiet floor &bull; R restarts</p>
+    </section>
+  </main>
+
+  <script type="module" src="script.js"></script>
 </body>
 </html>
