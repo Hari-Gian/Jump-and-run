@@ -74,6 +74,18 @@
         <span class="wallet wallet--large"><span aria-hidden="true">&#9679;</span> <strong data-wallet>0</strong> coins</span>
       </div>
       <p class="shop-intro">Collect island coins and clear levels to unlock a new look. Skins change your style, not your hitbox.</p>
+      <section class="coin-store" aria-labelledby="coin-store-title">
+        <div class="coin-store-copy">
+          <p class="eyebrow">Coin bundles</p>
+          <h3 id="coin-store-title">Top up your wallet</h3>
+          <p>Secure checkout needs to be connected before these bundles can accept real payments.</p>
+        </div>
+        <div class="coin-pack-grid">
+          <button class="coin-pack" data-coin-pack="150" type="button"><strong>150</strong><span>coins</span><b>CHF 1.00</b></button>
+          <button class="coin-pack coin-pack--popular" data-coin-pack="500" type="button"><small>Popular</small><strong>500</strong><span>coins</span><b>CHF 2.50</b></button>
+          <button class="coin-pack" data-coin-pack="1200" type="button"><strong>1,200</strong><span>coins</span><b>CHF 5.00</b></button>
+        </div>
+      </section>
       <div id="shop-grid" class="shop-grid" aria-live="polite"></div>
     </section>
 
@@ -117,6 +129,22 @@
       <p class="game-tip">Reach the island gate &bull; Never trust a quiet floor &bull; R restarts</p>
     </section>
   </main>
+
+  <button id="music-toggle" class="music-toggle" type="button" aria-label="Turn music off">
+    <span aria-hidden="true">&#9835;</span>
+    <span><strong>Music on</strong><small id="music-track">Island Lobby</small></span>
+  </button>
+
+  <dialog id="payment-dialog" class="payment-dialog">
+    <form method="dialog">
+      <button class="icon-button" value="cancel" aria-label="Close payment information">&times;</button>
+    </form>
+    <span class="payment-icon" aria-hidden="true">&#128274;</span>
+    <p class="eyebrow">No charge was made</p>
+    <h2>Secure checkout needs setup</h2>
+    <p>The coin bundles are designed, but real payments require a payment account and a secure server confirmation before coins can be delivered.</p>
+    <button id="payment-dialog-close" class="button button--primary" type="button">Got it</button>
+  </dialog>
 
   <script type="module" src="script.js"></script>
 </body>

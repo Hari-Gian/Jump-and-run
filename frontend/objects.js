@@ -42,14 +42,14 @@ const dropBlock = (x, width, triggerX, targetY = 470) => ({
 const coin = (id, x, y) => ({ id, x, y });
 
 export const skins = [
-  { id: 'classic', name: 'Island Classic', cost: 0, colors: ['#ffca28', '#08764a'], mark: 'flag' },
-  { id: 'coconut', name: 'Coconut Cub', cost: 0, colors: ['#f4e2b8', '#68472f'], mark: 'eyes' },
-  { id: 'lagoon', name: 'Blue Lagoon', cost: 70, colors: ['#46d9d1', '#075f71'], mark: 'wave' },
-  { id: 'sunset', name: 'Sunset Sprinter', cost: 120, colors: ['#ff934f', '#c92d4b'], mark: 'sun' },
-  { id: 'reggae', name: 'Reggae Royal', cost: 190, colors: ['#18a968', '#ffca28'], mark: 'crown' },
-  { id: 'midnight', name: 'Midnight Star', cost: 270, colors: ['#26243d', '#9d7bff'], mark: 'star' },
-  { id: 'gold', name: 'Golden Legend', cost: 360, colors: ['#ffd95a', '#a56b00'], mark: 'crown' },
-  { id: 'trickster', name: 'Island Trickster', cost: 450, colors: ['#e84c3d', '#4a1021'], mark: 'horns' }
+  { id: 'classic', name: 'Island Classic', rarity: 'Starter', cost: 0, colors: ['#ffca28', '#08764a'], accent: '#fff8df', mark: 'flag' },
+  { id: 'coconut', name: 'Coconut Cub', rarity: 'Free', cost: 0, colors: ['#f4e2b8', '#68472f'], accent: '#fff8df', mark: 'eyes' },
+  { id: 'lagoon', name: 'Blue Lagoon', rarity: 'Fresh', cost: 70, colors: ['#46d9d1', '#075f71'], accent: '#d9ffff', mark: 'wave' },
+  { id: 'sunset', name: 'Sunset Sprinter', rarity: 'Rare', cost: 120, colors: ['#ff934f', '#c92d4b'], accent: '#ffe39a', mark: 'sun' },
+  { id: 'reggae', name: 'Reggae Royal', rarity: 'Rare', cost: 190, colors: ['#18a968', '#ffca28'], accent: '#e84c3d', mark: 'crown' },
+  { id: 'midnight', name: 'Midnight Star', rarity: 'Epic', cost: 270, colors: ['#26243d', '#9d7bff'], accent: '#f1e9ff', mark: 'star' },
+  { id: 'gold', name: 'Golden Legend', rarity: 'Legendary', cost: 360, colors: ['#ffd95a', '#a56b00'], accent: '#fff8df', mark: 'crown' },
+  { id: 'trickster', name: 'Island Trickster', rarity: 'Mythic', cost: 450, colors: ['#e84c3d', '#4a1021'], accent: '#ffca28', mark: 'horns' }
 ];
 
 export const levels = [
@@ -422,7 +422,9 @@ export function drawPlatforms(ctx, level, cameraX = 0, runtimePlatforms = level.
     ctx.fillRect(x + 7, item.y + 8, item.width, item.height);
     ctx.fillStyle = level.platformColor;
     ctx.fillRect(x, item.y, item.width, item.height);
-    ctx.fillStyle = item.type === 'fake' ? 'rgba(255,255,255,.48)' : level.accentColor;
+    ctx.fillStyle = item.warningAt !== null
+      ? '#ff8a4b'
+      : (item.type === 'fake' ? 'rgba(255,255,255,.7)' : level.accentColor);
     ctx.fillRect(x, item.y, item.width, Math.min(9, item.height));
 
     if (item.type === 'collapse') {

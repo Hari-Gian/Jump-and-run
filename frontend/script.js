@@ -1,4 +1,5 @@
 import { levels, skins, drawPlatforms } from './objects.js';
+import { createMusicPlayer } from './music.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -9,9 +10,22 @@ const levelComplete = document.getElementById('level-complete');
 const trapToast = document.getElementById('trap-toast');
 const playerImage = new Image();
 const jumpSound = new Audio('./sounds/mi-bombo-duolingo.mp3');
+const musicToggle = document.getElementById('music-toggle');
+const paymentDialog = document.getElementById('payment-dialog');
 
 playerImage.src = './bilderundso/jamacia.png';
 jumpSound.volume = 0.3;
+
+function updateMusicUI(state) {
+  const title = musicToggle.querySelector('strong');
+  title.textContent = state.muted ? 'Music off' : 'Music on';
+  document.getElementById('music-track').textContent = state.trackName;
+  musicToggle.setAttribute('aria-label', state.muted ? 'Turn music on' : 'Turn music off');
+  musicToggle.classList.toggle('is-muted', state.muted);
+}
+
+const music = createMusicPlayer(updateMusicUI);
+music.setLobby();
 
 const player = {
   x: 35,
@@ -51,6 +65,7 @@ let jumpBufferedUntil = 0;
 let activeCheckpointIndex = -1;
 let checkpoints = [];
 let particles = [];
+let standingPlatform = null;
 
 function defaultSave() {
   return {
@@ -148,10 +163,10 @@ function renderShop() {
     if (equipped) action = 'Equipped';
 
     return `
-      <article class="shop-card${equipped ? ' is-equipped' : ''}" style="--skin-main:${skin.colors[0]};--skin-dark:${skin.colors[1]}">
+      <article class="shop-card${equipped ? ' is-equipped' : ''}" style="--skin-main:${skin.colors[0]};--skin-dark:${skin.colors[1]};--skin-accent:${skin.accent}">
         <div class="skin-preview skin-preview--${skin.mark}" aria-hidden="true"><span></span><i></i><b></b></div>
         <div class="skin-copy">
-          <small>${owned ? 'Owned' : 'Skin'}</small>
+          <small>${skin.rarity}${owned ? ' • Owned' : ''}</small>
           <h3>${skin.name}</h3>
         </div>
         <button class="button button--skin" data-skin="${skin.id}" type="button" ${(equipped || (!owned && !canAfford)) ? 'disabled' : ''}>
@@ -178,6 +193,7 @@ function showScreen(screenId) {
 
   if (screenId === 'level-screen') renderLevelCards();
   if (screenId === 'shop-screen') renderShop();
+  if (screenId !== 'game-screen') music.setLobby();
   updateWallets();
 }
 
@@ -186,16 +202,18 @@ function createRuntime() {
   const alreadyCollected = new Set(gameSave.collected[currentLevelIndex] || []);
 
   return {
-    platforms: level.platforms.map((item) => {
+    platforms: level.platforms.map((item, index) => {
       const landingBonus = item.height < 70 ? 28 : 0;
       const adjustedX = item.x - landingBonus / 2;
       return {
         ...item,
+        id: `platform-${index}`,
         x: adjustedX,
         width: item.width + landingBonus,
         baseX: adjustedX,
         baseY: item.y,
         active: true,
+        warningAt: null,
         triggeredAt: null,
         fallSpeed: 0
       };
@@ -250,6 +268,7 @@ function resetPlayer(countDeath = false) {
   visualPlayer.scaleY = 1;
   visualPlayer.rotation = 0;
   particles = [];
+  standingPlatform = null;
   document.querySelector('.game-stage').classList.remove('is-hit');
   gameRunning = !document.getElementById('game-screen').hidden && !levelFinished;
 }
@@ -271,6 +290,7 @@ function startLevel(index) {
   trapToast.hidden = true;
 
   const level = levels[index];
+  music.setLevel(index);
   document.getElementById('current-level-number').textContent = `Level ${String(index + 1).padStart(2, '0')}`;
   document.getElementById('current-level-name').textContent = level.name;
   document.getElementById('fall-display').textContent = '0';
@@ -295,6 +315,7 @@ function jump() {
 
   player.vy = -12.5;
   isOnGround = false;
+  standingPlatform = null;
   jumpBufferedUntil = 0;
   visualPlayer.scaleX = 0.86;
   visualPlayer.scaleY = 1.14;
@@ -385,18 +406,26 @@ function overlaps(a, b) {
 
 function updatePlatforms(timestamp, frameScale) {
   runtime.platforms.forEach((item) => {
+    const previousX = item.x;
+    const previousY = item.y;
     if (item.type === 'moving') {
       const offset = Math.sin(timestamp * item.speed * 0.78) * item.range * 0.86;
       item.x = item.axis === 'x' ? item.baseX + offset : item.baseX;
       item.y = item.axis === 'y' ? item.baseY + offset : item.baseY;
     }
 
-    if (item.type === 'fake' && item.triggeredAt === null && player.x + player.width > item.x - 145) {
-      item.triggeredAt = timestamp;
+    if (standingPlatform === item) {
+      player.x += item.x - previousX;
+      player.y += item.y - previousY;
+    }
+
+    if (item.type === 'fake' && item.warningAt === null && player.x + player.width > item.x - 170) {
+      item.warningAt = timestamp;
     }
 
     if ((item.type === 'collapse' || item.type === 'fake') && item.triggeredAt !== null) {
-      if (timestamp - item.triggeredAt > (item.delay || 350) + 240) {
+      const safetyDelay = item.type === 'fake' ? 1050 : 700;
+      if (timestamp - item.triggeredAt > (item.delay || 350) + safetyDelay) {
         item.fallSpeed += 0.46 * frameScale;
         item.y += item.fallSpeed * frameScale;
         if (item.y > canvas.height + 100) item.active = false;
@@ -501,6 +530,7 @@ function update(timestamp, frameDelta) {
   player.vy += 0.5 * frameScale;
   player.y += player.vy * frameScale;
   isOnGround = false;
+  standingPlatform = null;
 
   if (player.vy >= 0) {
     const landingPlatform = runtime.platforms.find((item) => {
@@ -514,13 +544,14 @@ function update(timestamp, frameDelta) {
       player.y = landingPlatform.y - player.height;
       player.vy = 0;
       isOnGround = true;
+      standingPlatform = landingPlatform;
       lastGroundedAt = timestamp;
       if (fallingVelocity > 5.5) {
         visualPlayer.scaleX = 1.16;
         visualPlayer.scaleY = 0.84;
         spawnLandingParticles(player.x, landingPlatform.y);
       }
-      if (landingPlatform.type === 'collapse' && landingPlatform.triggeredAt === null) {
+      if ((landingPlatform.type === 'collapse' || landingPlatform.type === 'fake') && landingPlatform.triggeredAt === null) {
         landingPlatform.triggeredAt = timestamp;
       }
     }
@@ -710,7 +741,11 @@ function drawPlayer() {
   ctx.shadowColor = 'rgba(7,29,22,.28)';
   ctx.shadowBlur = 11;
   ctx.shadowOffsetY = 7;
-  ctx.fillStyle = skin.colors[0];
+  const skinGradient = ctx.createLinearGradient(0, y, 0, y + player.height);
+  skinGradient.addColorStop(0, skin.accent);
+  skinGradient.addColorStop(0.28, skin.colors[0]);
+  skinGradient.addColorStop(1, skin.colors[1]);
+  ctx.fillStyle = skinGradient;
   ctx.fillRect(x, y, player.width, player.height);
   ctx.shadowColor = 'transparent';
 
@@ -752,6 +787,15 @@ function drawPlayer() {
       ctx.lineTo(x + 35, y - 8);
       ctx.lineTo(x + 42, y + 13);
       ctx.fill();
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,.3)';
+    ctx.fillRect(x + 5, y + 6, 5, 20);
+    if (!['eyes', 'star'].includes(skin.mark)) {
+      ctx.fillStyle = '#071d16';
+      ctx.fillRect(x + 35, y + 12, 6, 8);
+      ctx.fillStyle = skin.accent;
+      ctx.fillRect(x + 37, y + 13, 2, 3);
     }
   }
 
@@ -836,6 +880,15 @@ document.getElementById('back-to-levels').addEventListener('click', () => showSc
 document.getElementById('restart-button').addEventListener('click', restartLevel);
 document.getElementById('levels-button').addEventListener('click', () => showScreen('level-screen'));
 document.getElementById('next-level-button').addEventListener('click', () => startLevel((currentLevelIndex + 1) % levels.length));
+
+document.addEventListener('pointerdown', () => music.enable(), { once: true, capture: true });
+document.addEventListener('keydown', () => music.enable(), { once: true, capture: true });
+musicToggle.addEventListener('click', () => music.toggle());
+
+document.querySelectorAll('[data-coin-pack]').forEach((button) => {
+  button.addEventListener('click', () => paymentDialog.showModal());
+});
+document.getElementById('payment-dialog-close').addEventListener('click', () => paymentDialog.close());
 
 document.querySelectorAll('[data-screen]').forEach((button) => {
   button.addEventListener('click', () => showScreen(button.dataset.screen));
